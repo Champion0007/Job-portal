@@ -24,3 +24,35 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Motion Utilities */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fade-up {
+    animation: fadeUp 600ms ease both;
+  }
+  .animate-fade-in {
+    animation: fadeIn 500ms ease both;
+  }
+  .animate-pop {
+    animation: pop 420ms cubic-bezier(.2,.9,.3,1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pop {
+    0% { opacity: 0; transform: scale(.97); }
+    60% { opacity: 1; transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up, .animate-fade-in, .animate-pop { animation: none !important; }
+}
