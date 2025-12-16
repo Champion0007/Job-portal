@@ -9,7 +9,10 @@ router.post('/', async (req, res) => {
     const { name, email, message } = req.body;
     if (!name || !email || !message) return res.status(400).json({ message: 'name, email and message are required' });
 
-    const to = process.env.CONTACT_TO || process.env.EMAIL_FROM || 'support@jobportal.example';
+    // Where contact form submissions should be delivered.
+    // 1) If CONTACT_TO is set in backend/.env, use that.
+    // 2) Otherwise, fall back to Abhinav's primary inbox.
+    const to = process.env.CONTACT_TO || 'abhinavpal9917@gmail.com';
     const subject = `New contact form submission from ${name}`;
     const text = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
     const html = `<p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><hr/><p>${message.replace(/\n/g, '<br/>')}</p>`;
