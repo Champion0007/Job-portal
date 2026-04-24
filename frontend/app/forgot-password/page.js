@@ -19,8 +19,7 @@ export default function ForgotPasswordPage() {
       setStatus({
         ok: res.ok,
         message:
-          // data.message || "If that email exists, a reset link has been sent.",
-          data.message || "reset link send to your registred email address.",
+          data.message || "Reset link sent to your registered email address.",
       });
     } catch (err) {
       setStatus({ ok: false, message: "Failed to send. Try again later." });
@@ -32,19 +31,22 @@ export default function ForgotPasswordPage() {
       <div className="max-w-3xl mx-auto px-6">
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="flex flex-col md:flex-row">
+            {/* LEFT */}
             <div className="p-8 md:w-1/2">
               <h1 className="text-2xl font-semibold text-indigo-800">
                 Forgot your password?
               </h1>
+
               <p className="mt-3 text-sm text-gray-600">
-                Enter your account email and we'll send a link to reset your
-                password.
+                Enter your account email and we&apos;ll send a link to reset
+                your password.
               </p>
 
               <form onSubmit={submit} className="mt-6">
                 <label className="block text-sm font-medium text-gray-700">
                   Email
                 </label>
+
                 <input
                   required
                   type="email"
@@ -65,7 +67,9 @@ export default function ForgotPasswordPage() {
 
                 {status && !status.loading && (
                   <p
-                    className={`mt-4 text-sm ${status.ok ? "text-green-600" : "text-red-600"}`}
+                    className={`mt-4 text-sm ${
+                      status.ok ? "text-green-600" : "text-red-600"
+                    }`}
                   >
                     {status.message}
                   </p>
@@ -73,12 +77,15 @@ export default function ForgotPasswordPage() {
               </form>
             </div>
 
+            {/* RIGHT */}
             <div className="bg-indigo-50 p-8 md:w-1/2 flex flex-col justify-center">
               <h3 className="text-indigo-700 font-medium">Need help?</h3>
+
               <p className="mt-3 text-sm text-gray-600">
                 If you Don&apos;t receive the email within a few minutes, check
                 your spam folder or contact support.
               </p>
+
               <div className="mt-6">
                 <a
                   className="text-sm text-indigo-600 hover:underline"
