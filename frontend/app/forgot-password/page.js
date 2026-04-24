@@ -76,8 +76,8 @@ export default function ForgotPasswordPage() {
             <div className="bg-indigo-50 p-8 md:w-1/2 flex flex-col justify-center">
               <h3 className="text-indigo-700 font-medium">Need help?</h3>
               <p className="mt-3 text-sm text-gray-600">
-                If you don't receive the email within a few minutes, check your
-                spam folder or contact support.
+                If you Don&apos;t receive the email within a few minutes, check
+                your spam folder or contact support.
               </p>
               <div className="mt-6">
                 <a
