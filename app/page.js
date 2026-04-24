@@ -1,13 +1,7 @@
 import Navbar from "../components/Navbar";
 import HeroSection from "../components/Herosection";
 import Footer from "../components/Footer";
-import Jobcard from "../components/Jobcard";
-
-const featured = [
-  { _id: '1', title: 'Frontend Engineer', company: 'Tech Corp', location: 'New York', jobType: 'Full-time' },
-  { _id: '2', title: 'Backend Developer', company: 'Innovate LLC', location: 'Remote', jobType: 'Part-time' },
-  { _id: '3', title: 'Product Designer', company: 'Designly', location: 'Bengaluru', jobType: 'Full-time' }
-];
+import FeaturedJobs from "../components/FeaturedJobs";
 
 export default function Home() {
   return (
@@ -16,14 +10,7 @@ export default function Home() {
       <HeroSection />
 
       <main className="mx-auto max-w-6xl px-5 py-12 sm:px-6 lg:px-8">
-        <section className="mb-12">
-          <h2 className="mb-4 text-2xl font-bold">Featured jobs</h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((j) => (
-              <Jobcard key={j._id} job={j} />
-            ))}
-          </div>
-        </section>
+        <FeaturedJobs />
 
         <section className="mb-12 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">

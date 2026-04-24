@@ -74,14 +74,17 @@ export default function DashboardEmployer() {
   // ✅ pehle se wala function – SHORTLIST/REJECT etc.
   const updateStatus = async (appId, status) => {
     try {
-      const res = await fetch(`${API_BASE}/api/applications/${appId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
-      });
+      const res = await fetch(
+        `${API_BASE}/api/applications/${appId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status }),
+        }
+      );
 
       const data = await res.json();
 
@@ -91,7 +94,9 @@ export default function DashboardEmployer() {
       }
 
       setSelectedApplicants((prev) =>
-        prev.map((app) => (app._id === appId ? { ...app, status } : app))
+        prev.map((app) =>
+          app._id === appId ? { ...app, status } : app
+        )
       );
     } catch (err) {
       console.error("Update Status Error:", err);
@@ -160,11 +165,7 @@ export default function DashboardEmployer() {
       setSelectedApplicants((prev) =>
         prev.map((app) =>
           app._id === interviewForm.appId
-            ? {
-                ...app,
-                status: "interview",
-                interview: data.application.interview,
-              }
+            ? { ...app, status: "interview", interview: data.application.interview }
             : app
         )
       );
@@ -183,6 +184,7 @@ export default function DashboardEmployer() {
 
   return (
     <div className="space-y-8">
+
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl shadow">
         <div>
@@ -282,24 +284,12 @@ export default function DashboardEmployer() {
                   </div>
 
                   <div className="text-sm text-gray-700 grid grid-cols-2 gap-2">
-                    <p>
-                      <b>Email:</b> {app.email}
-                    </p>
-                    <p>
-                      <b>Phone:</b> {app.phone}
-                    </p>
-                    <p>
-                      <b>City:</b> {app.city}
-                    </p>
-                    <p>
-                      <b>Exp:</b> {app.experienceYears} yrs
-                    </p>
-                    <p>
-                      <b>Company:</b> {app.currentCompany || "N/A"}
-                    </p>
-                    <p>
-                      <b>Role:</b> {app.currentRole || "N/A"}
-                    </p>
+                    <p><b>Email:</b> {app.email}</p>
+                    <p><b>Phone:</b> {app.phone}</p>
+                    <p><b>City:</b> {app.city}</p>
+                    <p><b>Exp:</b> {app.experienceYears} yrs</p>
+                    <p><b>Company:</b> {app.currentCompany || "N/A"}</p>
+                    <p><b>Role:</b> {app.currentRole || "N/A"}</p>
                   </div>
 
                   {app.skills?.length > 0 && (
@@ -395,147 +385,117 @@ export default function DashboardEmployer() {
                   </div>
 
                   {/* 🆕 INLINE INTERVIEW FORM (ONLY FOR SELECTED APPLICANT) */}
-                  {/* ✅ MODERN INTERVIEW FORM UI */}
                   {interviewForm.appId === app._id && (
-                    <div className="mt-6 bg-gradient-to-br from-indigo-50 to-white border border-indigo-200 p-6 rounded-2xl shadow-xl animate-fadeIn">
-                      <h3 className="text-lg font-bold text-indigo-700 flex items-center gap-2 mb-4">
-                        <Calendar size={18} /> Schedule Interview
-                      </h3>
+                    <form
+                      onSubmit={scheduleInterview}
+                      className="mt-4 p-3 border rounded bg-white space-y-2 text-xs"
+                    >
+                      <div className="font-semibold text-gray-800 mb-1">
+                        Schedule Interview
+                      </div>
 
-                      <form
-                        onSubmit={scheduleInterview}
-                        className="space-y-4 text-sm"
-                      >
-                        {/* DATE & TIME */}
-                        <div>
-                          <label className="block font-medium text-gray-700 mb-1">
-                            Date & Time
-                          </label>
-                          <input
-                            type="datetime-local"
-                            className="w-full rounded-xl border border-indigo-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                            value={interviewForm.date}
-                            onChange={(e) =>
-                              setInterviewForm((prev) => ({
-                                ...prev,
-                                date: e.target.value,
-                              }))
-                            }
-                            required
-                          />
-                        </div>
+                      <div>
+                        <label className="block mb-1">Date & Time</label>
+                        <input
+                          type="datetime-local"
+                          className="w-full border rounded px-2 py-1"
+                          value={interviewForm.date}
+                          onChange={(e) =>
+                            setInterviewForm((prev) => ({
+                              ...prev,
+                              date: e.target.value,
+                            }))
+                          }
+                          required
+                        />
+                      </div>
 
-                        {/* MODE */}
-                        <div>
-                          <label className="block font-medium text-gray-700 mb-1">
-                            Interview Mode
-                          </label>
-                          <select
-                            className="w-full rounded-xl border border-indigo-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                            value={interviewForm.mode}
-                            onChange={(e) =>
-                              setInterviewForm((prev) => ({
-                                ...prev,
-                                mode: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="online">Online</option>
-                            <option value="in-person">In-Person</option>
-                          </select>
-                        </div>
+                      <div>
+                        <label className="block mb-1">Mode</label>
+                        <select
+                          className="w-full border rounded px-2 py-1"
+                          value={interviewForm.mode}
+                          onChange={(e) =>
+                            setInterviewForm((prev) => ({
+                              ...prev,
+                              mode: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="online">Online</option>
+                          <option value="in-person">In-person</option>
+                        </select>
+                      </div>
 
-                        {/* LINK / LOCATION */}
-                        <div>
-                          <label className="block font-medium text-gray-700 mb-1">
-                            Meeting Link / Office Address
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full rounded-xl border border-indigo-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                            placeholder="Google Meet / Office Address"
-                            value={
-                              interviewForm.mode === "online"
-                                ? interviewForm.link
-                                : interviewForm.location
-                            }
-                            onChange={(e) =>
-                              setInterviewForm((prev) =>
-                                interviewForm.mode === "online"
-                                  ? { ...prev, link: e.target.value }
-                                  : { ...prev, location: e.target.value }
-                              )
-                            }
-                          />
-                        </div>
+                      <div>
+                        <label className="block mb-1">
+                          Location (for in-person)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full border rounded px-2 py-1"
+                          value={interviewForm.location}
+                          onChange={(e) =>
+                            setInterviewForm((prev) => ({
+                              ...prev,
+                              location: e.target.value,
+                            }))
+                          }
+                          placeholder="Office address"
+                        />
+                      </div>
 
-                        {/* NOTES */}
-                        <div>
-                          <label className="block font-medium text-gray-700 mb-1">
-                            Notes for Candidate
-                          </label>
-                          <textarea
-                            rows="3"
-                            className="w-full rounded-xl border border-indigo-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                            placeholder="Any special instructions for the candidate..."
-                            value={interviewForm.notes}
-                            onChange={(e) =>
-                              setInterviewForm((prev) => ({
-                                ...prev,
-                                notes: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
+                      <div>
+                        <label className="block mb-1">
+                          Meeting Link (for online)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full border rounded px-2 py-1"
+                          value={interviewForm.link}
+                          onChange={(e) =>
+                            setInterviewForm((prev) => ({
+                              ...prev,
+                              link: e.target.value,
+                            }))
+                          }
+                          placeholder="Google Meet / Zoom link"
+                        />
+                      </div>
 
-                        {/* BUTTONS */}
-                        <div className="flex justify-end gap-3 pt-3">
-                          <button
-                            type="button"
-                            onClick={cancelInterviewForm}
-                            className="px-4 py-2 rounded-xl border text-gray-600 hover:bg-gray-100 transition"
-                          >
-                            Cancel
-                          </button>
+                      <div>
+                        <label className="block mb-1">Notes</label>
+                        <textarea
+                          className="w-full border rounded px-2 py-1"
+                          rows={2}
+                          value={interviewForm.notes}
+                          onChange={(e) =>
+                            setInterviewForm((prev) => ({
+                              ...prev,
+                              notes: e.target.value,
+                            }))
+                          }
+                          placeholder="Anything important for candidate"
+                        />
+                      </div>
 
-                          <button
-                            type="submit"
-                            className="px-6 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-md transition"
-                          >
-                            Save Interview
-                          </button>
-                        </div>
-                      </form>
-                    </div>
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={cancelInterviewForm}
+                          className="px-3 py-1 rounded border text-gray-600"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-3 py-1 rounded bg-indigo-600 text-white"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </form>
                   )}
-
-                  <div className="mt-3 text-sm flex items-center gap-2">
-                    <b className="text-gray-700">Candidate Response:</b>
-
-                    {app.interviewResponse ? (
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide
-        transition-all duration-300 transform hover:scale-105 animate-fadeIn
-        ${
-          app.interviewResponse === "accepted"
-            ? "bg-green-100 text-green-700 border border-green-200 shadow-sm"
-            : "bg-red-100 text-red-700 border border-red-200 shadow-sm"
-        }`}
-                      >
-                        {app.interviewResponse === "accepted"
-                          ? "✅ Accepted"
-                          : "❌ Rejected"}
-                      </span>
-                    ) : (
-                      <span
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs
-      bg-gray-100 text-gray-500 border border-gray-200
-      animate-pulse transition-all duration-300"
-                      >
-                        ⏳ Waiting for response
-                      </span>
-                    )}
-                  </div>
                 </div>
               ))}
             </div>

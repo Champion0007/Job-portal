@@ -69,7 +69,9 @@ export default function PostJobPage() {
         throw new Error(data.message || "Failed to create job");
       }
 
-      setSuccess("✅ Job posted successfully!");
+      setSuccess(
+        "Job posted successfully. It will appear on the Jobs page after admin approval."
+      );
       setTimeout(() => {
         router.push("/dashboard");
       }, 1200);

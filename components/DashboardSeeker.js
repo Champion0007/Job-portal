@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import Link from "next/link";
-import { Calendar, Video } from "lucide-react";
-
 import {
   Briefcase,
   MapPin,
@@ -40,38 +38,6 @@ export default function DashboardSeeker() {
   const { token } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // ✅ ✅ ✅ MISSING FUNCTION FIX (ADDED NOW)
-  const respondInterview = async (appId, response) => {
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/applications/${appId}/interview-response`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ response }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) return alert(data.message || "Failed");
-
-      setApplications((prev) =>
-        prev.map((app) =>
-          app._id === appId
-            ? { ...app, interviewResponse: response }
-            : app
-        )
-      );
-
-      alert(`Interview ${response}`);
-    } catch (err) {
-      alert("Server error");
-    }
-  };
 
   // ✅ FETCH CANDIDATE APPLICATIONS
   useEffect(() => {
@@ -155,64 +121,68 @@ export default function DashboardSeeker() {
                 </p>
               </div>
 
-              {/* 🆕 INTERVIEW DETAILS + ACCEPT / REJECT */}
+              {/* ✅ STATUS MESSAGE */}
+              <div className="mt-4 text-sm font-medium flex items-center gap-2">
+                {app.status === "hired" && (
+                  <>
+                    <CheckCircle className="text-green-600" size={18} />
+                    <span className="text-green-700">
+                      Congratulations! You are hired 🎉
+                    </span>
+                  </>
+                )}
+
+                {app.status === "rejected" && (
+                  <>
+                    <XCircle className="text-red-600" size={18} />
+                    <span className="text-red-700">
+                      Unfortunately, your application was rejected.
+                    </span>
+                  </>
+                )}
+
+                {["applied", "reviewed", "shortlisted", "interview"].includes(
+                  app.status
+                ) && (
+                  <>
+                    <Briefcase className="text-indigo-600" size={18} />
+                    <span className="text-indigo-700">
+                      Your application is in progress.
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* 🆕 INTERVIEW DETAILS FOR CANDIDATE */}
               {app.interview?.date && (
-                <div className="mt-4 bg-indigo-50 border border-indigo-200 rounded-xl p-4 shadow">
-                  <h3 className="text-indigo-700 font-semibold flex items-center gap-2 mb-2">
-                    <Calendar size={18} /> Interview Scheduled
-                  </h3>
-
-                  <p className="text-sm text-gray-700">
-                    <b>Date:</b>{" "}
-                    {new Date(app.interview.date).toLocaleString()}
-                  </p>
-
+                <div className="mt-3 p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-xs text-gray-800">
+                  <div className="font-semibold text-indigo-700 mb-1">
+                    Interview Scheduled
+                  </div>
+                  <div>
+                    Date & Time: {new Date(app.interview.date).toLocaleString()}
+                  </div>
+                  {app.interview.mode && (
+                    <div>Mode: {app.interview.mode.toUpperCase()}</div>
+                  )}
+                  {app.interview.location && (
+                    <div>Location: {app.interview.location}</div>
+                  )}
                   {app.interview.link && (
-                    <a
-                      href={app.interview.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 mt-2 text-indigo-600 underline text-sm"
-                    >
-                      <Video size={16} /> Join Interview
-                    </a>
-                  )}
-
-                  {!app.interviewResponse && (
-                    <div className="mt-4 flex gap-3">
-                      <button
-                        onClick={() =>
-                          respondInterview(app._id, "accepted")
-                        }
-                        className="px-4 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 text-sm"
+                    <div>
+                      Link:{" "}
+                      <a
+                        href={app.interview.link}
+                        target="_blank"
+                        className="text-indigo-600 underline"
+                        rel="noreferrer"
                       >
-                        ✅ Accept
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          respondInterview(app._id, "rejected")
-                        }
-                        className="px-4 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 text-sm"
-                      >
-                        ❌ Reject
-                      </button>
+                        Join Meeting
+                      </a>
                     </div>
                   )}
-
-                  {app.interviewResponse && (
-                    <div className="mt-3 text-sm font-semibold">
-                      Status:
-                      <span
-                        className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                          app.interviewResponse === "accepted"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {app.interviewResponse.toUpperCase()}
-                      </span>
-                    </div>
+                  {app.interview.notes && (
+                    <div>Note: {app.interview.notes}</div>
                   )}
                 </div>
               )}

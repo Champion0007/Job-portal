@@ -64,7 +64,7 @@ export default function ContactPage() {
                   </button>
                   <div className="text-sm text-neutral-600">
                     {status === 'sending' && <div>Sending...</div>}
-                    {status === 'sent' && <div className="text-green-600">Message sent (demo).</div>}
+                    {status === 'sent' && <div className="text-green-600">Message sent Successfully.</div>}
                     {status === 'error' && <div className="text-red-600">Error sending message.</div>}
                   </div>
                 </div>
