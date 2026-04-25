@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { getToken } from "@/lib/auth";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+).replace(/\/+$/, "");
 
 export default function AdminSubscribersPage() {
   const [subscribers, setSubscribers] = useState([]);
@@ -47,23 +49,23 @@ export default function AdminSubscribersPage() {
   }, []);
 
   if (loading) {
-    return <div className="p-6">Loading subscribers...</div>;
+    return <div className="p-6 text-gray-300">Loading subscribers...</div>;
   }
 
   if (error) {
-    return <div className="p-6 text-red-600 font-semibold">{error}</div>;
+    return <div className="p-6 text-red-500 font-semibold">{error}</div>;
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 text-white">
       <h1 className="text-2xl font-bold mb-4">Subscribers</h1>
 
       {subscribers.length === 0 ? (
-        <p>No subscribers yet.</p>
+        <p className="text-gray-400">No subscribers yet.</p>
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="bg-gray-900 text-white shadow-lg rounded-lg overflow-hidden border border-gray-700">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-800 text-gray-300">
               <tr>
                 <th className="text-left p-3">Email</th>
                 <th className="text-left p-3">Subscribed At</th>
@@ -71,9 +73,12 @@ export default function AdminSubscribersPage() {
             </thead>
             <tbody>
               {subscribers.map((s) => (
-                <tr key={s._id} className="border-t">
-                  <td className="p-3">{s.email}</td>
-                  <td className="p-3">
+                <tr
+                  key={s._id}
+                  className="border-t border-gray-700 hover:bg-gray-800 transition"
+                >
+                  <td className="p-3 text-gray-200">{s.email}</td>
+                  <td className="p-3 text-gray-400">
                     {new Date(s.createdAt).toLocaleString()}
                   </td>
                 </tr>
