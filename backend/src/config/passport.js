@@ -18,7 +18,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         try {
           const email = profile.emails?.[0]?.value;
           if (!email) {
-            return done(new Error("Google account did not provide an email"), null);
+            return done(
+              new Error("Google account did not provide an email"),
+              null,
+            );
           }
 
           let user = await User.findOne({
@@ -54,13 +57,17 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   passport.use(
     new GitHubStrategy(
       {
-        clientID: process.env.GITHUB_CLIENT_ID,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        clientID: process.env.GITHUB_CLIENT_ID?.trim(),
+        clientSecret: process.env.GITHUB_CLIENT_SECRET?.trim(),
         callbackURL: "/api/auth/github/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
-          const email = profile.emails?.[0]?.value || null;
+          const email =
+            profile.emails && profile.emails.length > 0
+              ? profile.emails[0].value
+              : null;
+              console.log("GITHUB PROFILE:", profile);
           const lookup = [{ githubId: profile.id }];
           if (email) lookup.push({ email: email.toLowerCase() });
 
