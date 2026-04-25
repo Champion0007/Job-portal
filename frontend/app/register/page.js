@@ -6,7 +6,7 @@ import { useLoading } from "../../components/LoadingContext";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 export default function RegisterPage() {
   const [name, setName] = useState("");

@@ -1,7 +1,7 @@
 "use client";
 import { useLoading } from "../components/LoadingContext";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 export function useApi() {
   const { withLoading } = useLoading();

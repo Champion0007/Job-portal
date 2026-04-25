@@ -6,9 +6,9 @@ import { useAuth } from "../../../components/AuthContext";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
-/* ✅ SAFE LOCATION FORMATTER */
+/* SAFE LOCATION FORMATTER */
 function formatLocation(location) {
   if (!location) return "Location not specified";
   return `${location.city || ""}${location.state ? ", " + location.state : ""}${
@@ -24,7 +24,7 @@ export default function JobDetailsPage() {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ FORM STATES
+  // FORM STATES
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -40,7 +40,7 @@ export default function JobDetailsPage() {
   const [applyError, setApplyError] = useState("");
   const [applySuccess, setApplySuccess] = useState("");
 
-  /* ✅ Fetch Job */
+  /* Fetch Job */
   useEffect(() => {
     if (!id) return;
 
@@ -63,7 +63,7 @@ export default function JobDetailsPage() {
     return () => (mounted = false);
   }, [id]);
 
-  /* ✅ APPLY HANDLER */
+  /* APPLY HANDLER */
   const handleApply = async (e) => {
     e.preventDefault();
     setApplyError("");
@@ -114,9 +114,9 @@ export default function JobDetailsPage() {
         throw new Error(data.message || "Failed to apply");
       }
 
-      setApplySuccess("✅ Application submitted successfully!");
+      setApplySuccess("Application submitted successfully!");
 
-      // ✅ Reset
+
       setFullName("");
       setEmail("");
       setPhone("");
@@ -162,9 +162,9 @@ export default function JobDetailsPage() {
     <div className="bg-gradient-to-br from-indigo-50 to-white text-neutral-900 min-h-screen flex flex-col">
       <Navbar />
 
-      {/* ✅✅ items-start added here */}
+
       <main className="container mx-auto px-6 py-10 flex-grow grid md:grid-cols-3 gap-8 items-start">
-        {/* ✅ LEFT JOB DETAILS */}
+
         <div className="md:col-span-2 bg-white p-8 rounded-2xl shadow-lg">
           <h1 className="text-4xl font-bold mb-2 text-indigo-700">
             {job.title}
@@ -176,16 +176,16 @@ export default function JobDetailsPage() {
 
           <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
             <span className="px-3 py-1 bg-indigo-50 rounded-full">
-              📍 {formatLocation(job.location)}
+              {formatLocation(job.location)}
             </span>
             <span className="px-3 py-1 bg-indigo-50 rounded-full">
-              🏷 {job.jobType}
+              {job.jobType}
             </span>
           </div>
 
           {job.salary?.min && job.salary?.max && (
             <p className="mt-4 inline-block px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-full">
-              ₹{job.salary.min} - ₹{job.salary.max}
+              Rs {job.salary.min} - Rs {job.salary.max}
             </p>
           )}
 
@@ -197,7 +197,7 @@ export default function JobDetailsPage() {
           </section>
         </div>
 
-        {/* ✅✅ APPLY CARD — h-fit & self-start added */}
+
         <div className="bg-white p-8 rounded-2xl shadow-lg h-fit self-start">
           <h2 className="text-2xl font-bold mb-6 text-indigo-700">
             Apply for this job

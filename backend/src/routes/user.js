@@ -10,7 +10,7 @@ const router = express.Router();
  */
 router.get("/me", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-passwordHash");
+    const user = await User.findById(req.user.id).select("-passwordHash -resetPasswordToken -resetPasswordExpires");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

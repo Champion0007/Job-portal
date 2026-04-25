@@ -116,7 +116,7 @@ router.get("/", async (req, res) => {
 
     const jobs = await Job.find(filter)
       .populate("company", "name logo")
-      .populate("employer", "name email")
+      .populate("employer", "name")
       .skip((pageNum - 1) * perPageNum)
       .limit(perPageNum)
       .sort({ createdAt: -1 });
@@ -130,9 +130,9 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id).populate(
-      "company employer"
-    );
+    const job = await Job.findOne({ _id: req.params.id, status: "approved" })
+      .populate("company", "name logo website")
+      .populate("employer", "name");
     if (!job) return res.status(404).json({ message: "Job not found" });
     res.json(job);
   } catch (err) {

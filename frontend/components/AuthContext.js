@@ -1,15 +1,14 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext(null);
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
-  // ✅ Restore session on refresh
   useEffect(() => {
     const t = localStorage.getItem("jp_token");
     const u = localStorage.getItem("jp_user");
@@ -18,16 +17,21 @@ export function AuthProvider({ children }) {
     if (u) setUser(JSON.parse(u));
   }, []);
 
-  // ✅ Normal login (email/password)
-  const saveSession = (t, u) => {
+  const saveSession = useCallback((t, u) => {
     setToken(t);
     setUser(u);
     localStorage.setItem("jp_token", t);
     localStorage.setItem("jp_user", JSON.stringify(u));
-  };
+  }, []);
 
-  // ✅ OAuth login (Google / GitHub)
-  const loginWithToken = async (t) => {
+  const clearSession = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem("jp_token");
+    localStorage.removeItem("jp_user");
+  }, []);
+
+  const loginWithToken = useCallback(async (t) => {
     try {
       localStorage.setItem("jp_token", t);
       setToken(t);
@@ -47,14 +51,7 @@ export function AuthProvider({ children }) {
       console.error("OAuth login failed:", err);
       clearSession();
     }
-  };
-
-  const clearSession = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem("jp_token");
-    localStorage.removeItem("jp_user");
-  };
+  }, [clearSession]);
 
   return (
     <AuthContext.Provider
@@ -62,7 +59,7 @@ export function AuthProvider({ children }) {
         user,
         token,
         login: saveSession,
-        loginWithToken, // 🔥 REQUIRED
+        loginWithToken,
         logout: clearSession,
       }}
     >

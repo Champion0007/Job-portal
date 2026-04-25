@@ -17,15 +17,18 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       async (accessToken, refreshToken, profile, done) => {
         try {
           const email = profile.emails?.[0]?.value;
+          if (!email) {
+            return done(new Error("Google account did not provide an email"), null);
+          }
 
           let user = await User.findOne({
-            $or: [{ googleId: profile.id }, { email }],
+            $or: [{ googleId: profile.id }, { email: email.toLowerCase() }],
           });
 
           if (!user) {
             user = await User.create({
               name: profile.displayName,
-              email,
+              email: email.toLowerCase(),
               googleId: profile.id,
               provider: "google",
               role: "seeker",
@@ -58,19 +61,22 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
       async (accessToken, refreshToken, profile, done) => {
         try {
           const email = profile.emails?.[0]?.value || null;
+          const lookup = [{ githubId: profile.id }];
+          if (email) lookup.push({ email: email.toLowerCase() });
 
           let user = await User.findOne({
-            $or: [{ githubId: profile.id }, { email }],
+            $or: lookup,
           });
 
           if (!user) {
-            user = await User.create({
+            const userData = {
               name: profile.username || profile.displayName,
-              email,
               githubId: profile.id,
               provider: "github",
               role: "seeker",
-            });
+            };
+            if (email) userData.email = email.toLowerCase();
+            user = await User.create(userData);
           } else if (!user.githubId) {
             user.githubId = profile.id;
             await user.save();

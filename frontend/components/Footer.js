@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 export default function Footer() {
   const [email, setEmail] = useState("");

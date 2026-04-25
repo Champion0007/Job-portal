@@ -9,12 +9,50 @@ const sendEmail = require("../utils/sendEmail");
 
 const router = express.Router();
 
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function publicUser(user) {
+  return {
+    id: user._id,
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    provider: user.provider,
+    profile: user.profile,
+    company: user.company,
+    resume: user.resume,
+    skills: user.skills,
+    isVerified: user.isVerified,
+  };
+}
+
+function signToken(user) {
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
+function oauthSuccessRedirect(token) {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  return `${frontendUrl}/auth/success#token=${encodeURIComponent(token)}`;
+}
+
+function frontendUrl() {
+  return process.env.FRONTEND_URL || "http://localhost:3000";
+}
+
 /* ======================
    REGISTER (SEEKER / EMPLOYER)
 ====================== */
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, password, role } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     if (!email || !password)
       return res.status(400).json({ message: "Email and password required" });
@@ -36,15 +74,11 @@ router.post("/register", async (req, res) => {
       role: safeRole,
     });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(user);
 
     res.json({
       token,
-      user: { id: user._id, email, name, role: user.role },
+      user: publicUser(user),
     });
   } catch (err) {
     console.error(err);
@@ -57,10 +91,18 @@ router.post("/register", async (req, res) => {
 ====================== */
 router.post("/admin-register", async (req, res) => {
   try {
-    const { name, email, password, adminCode } = req.body;
+    const { name, password, adminCode } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     if (adminCode !== process.env.ADMIN_REG_CODE)
       return res.status(403).json({ message: "Invalid admin code" });
+
+    if (!email || !password)
+      return res.status(400).json({ message: "Email and password required" });
+
+    const existing = await User.findOne({ email });
+    if (existing)
+      return res.status(400).json({ message: "Email already registered" });
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -71,13 +113,9 @@ router.post("/admin-register", async (req, res) => {
       role: "admin",
     });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(user);
 
-    res.json({ token, user });
+    res.json({ token, user: publicUser(user) });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -88,7 +126,8 @@ router.post("/admin-register", async (req, res) => {
 ====================== */
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { password } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
@@ -96,17 +135,16 @@ router.post("/login", async (req, res) => {
     if (user.isBlocked)
       return res.status(403).json({ message: "Account blocked" });
 
+    if (!user.passwordHash)
+      return res.status(400).json({ message: "Please login with your social account" });
+
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(user);
 
-    res.json({ token, user });
+    res.json({ token, user: publicUser(user) });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -128,19 +166,13 @@ router.get(
     // ✅ BLOCK CHECK
     if (req.user.isBlocked) {
       return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=blocked`
+        `${frontendUrl()}/login?error=blocked`
       );
     }
 
-    const token = jwt.sign(
-      { id: req.user._id, role: req.user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(req.user);
 
-    res.redirect(
-      `${process.env.FRONTEND_URL}/auth/success?token=${token}`
-    );
+    res.redirect(oauthSuccessRedirect(token));
   }
 );
 
@@ -160,19 +192,13 @@ router.get(
     // ✅ BLOCK CHECK
     if (req.user.isBlocked) {
       return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=blocked`
+        `${frontendUrl()}/login?error=blocked`
       );
     }
 
-    const token = jwt.sign(
-      { id: req.user._id, role: req.user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(req.user);
 
-    res.redirect(
-      `${process.env.FRONTEND_URL}/auth/success?token=${token}`
-    );
+    res.redirect(oauthSuccessRedirect(token));
   }
 );
 
@@ -181,13 +207,13 @@ router.get(
 ====================== */
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body.email);
     const user = await User.findOne({ email });
 
     if (!user) return res.json({ message: "If email exists, link sent." });
 
     const token = crypto.randomBytes(32).toString("hex");
-    user.resetPasswordToken = token;
+    user.resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
     user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
@@ -206,11 +232,13 @@ router.post("/forgot-password", async (req, res) => {
 });
 
 router.post("/reset-password", async (req, res) => {
-  const { token, email, password } = req.body;
+  const { token, password } = req.body;
+  const email = normalizeEmail(req.body.email);
+  const hashedToken = crypto.createHash("sha256").update(token || "").digest("hex");
 
   const user = await User.findOne({
     email,
-    resetPasswordToken: token,
+    resetPasswordToken: hashedToken,
     resetPasswordExpires: { $gt: Date.now() },
   });
 

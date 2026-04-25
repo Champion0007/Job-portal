@@ -38,7 +38,7 @@ router.post(
         return res.status(400).json({ message: "jobId is required" });
       }
 
-      const job = await Job.findById(jobId);
+      const job = await Job.findOne({ _id: jobId, status: "approved" });
       if (!job) return res.status(404).json({ message: "Job not found" });
 
       // check already applied

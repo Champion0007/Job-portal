@@ -9,11 +9,13 @@ const ProfileSchema = new mongoose.Schema({
 
 const UserSchema = new mongoose.Schema({
   name: { type: String },
-  email: { type: String, index: true, lowercase: true },
+  email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
   passwordHash: { type: String },
   role: { type: String, enum: ['seeker','employer','admin'], default: 'seeker' },
   // allow common OAuth providers including github
   provider: { type: String, enum: ['email','google','github','phone','facebook','apple'], default: 'email' },
+  googleId: { type: String, unique: true, sparse: true },
+  githubId: { type: String, unique: true, sparse: true },
   phone: { type: String },
   isVerified: { type: Boolean, default: false },
   isBlocked: { type: Boolean, default: false },
@@ -29,5 +31,14 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date },
 
 }, { timestamps: true });
+
+UserSchema.set('toJSON', {
+  transform(doc, ret) {
+    delete ret.passwordHash;
+    delete ret.resetPasswordToken;
+    delete ret.resetPasswordExpires;
+    return ret;
+  }
+});
 
 module.exports = mongoose.model('User', UserSchema);

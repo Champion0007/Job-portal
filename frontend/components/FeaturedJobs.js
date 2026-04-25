@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 export default function FeaturedJobs() {
   const [jobs, setJobs] = useState([]);
@@ -18,16 +18,16 @@ export default function FeaturedJobs() {
         const res = await fetch(`${API_BASE}/api/jobs?perPage=3`, {
           cache: "no-store",
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => null);
 
         if (!res.ok) {
-          throw new Error(data.message || "Failed to load jobs");
+          throw new Error(data?.message || "Failed to load jobs");
         }
 
         if (mounted) {
           setJobs(Array.isArray(data) ? data : []);
         }
-      } catch (err) {
+      } catch {
         if (mounted) {
           setError("Featured jobs are unavailable right now.");
         }
@@ -47,7 +47,6 @@ export default function FeaturedJobs() {
 
   return (
     <section className="mb-20 px-4">
-      {/* HEADER */}
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Featured Jobs</h2>
@@ -60,11 +59,10 @@ export default function FeaturedJobs() {
           href="/jobs"
           className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition"
         >
-          Browse all jobs →
+          Browse all jobs
         </Link>
       </div>
 
-      {/* CONTENT */}
       {loading ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((item) => (
@@ -90,7 +88,6 @@ export default function FeaturedJobs() {
               href={`/job/${job._id}`}
               className="group rounded-xl border border-gray-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
             >
-              {/* HEADER */}
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold">
                   {job.company?.name?.[0] || "C"}
@@ -106,11 +103,10 @@ export default function FeaturedJobs() {
                 </div>
               </div>
 
-              {/* TAGS */}
               <div className="mt-4 flex flex-wrap gap-2">
                 {job.salary?.min && (
                   <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full">
-                    ₹{job.salary.min} - ₹{job.salary.max}
+                    Rs {job.salary.min} - Rs {job.salary.max}
                   </span>
                 )}
 
@@ -123,14 +119,13 @@ export default function FeaturedJobs() {
                 </span>
               </div>
 
-              {/* FOOTER */}
               <div className="mt-5 flex items-center justify-between">
                 <span className="text-xs text-gray-400">
                   {job.createdAt ? "Recently posted" : "New"}
                 </span>
 
                 <span className="text-sm font-medium text-indigo-600 group-hover:underline">
-                  Apply →
+                  Apply
                 </span>
               </div>
             </Link>

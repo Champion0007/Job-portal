@@ -3,7 +3,7 @@ import { useState } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -45,7 +45,7 @@ export default function ContactPage() {
               </h1>
 
               <p className="text-gray-700 mb-6">
-                Questions, feedback, or partnership inquiries — we&apos;d love
+                Questions, feedback, or partnership inquiries - we&apos;d love
                 to hear from you. Fill the form and our team will get back
                 within one business day.
               </p>
@@ -149,7 +149,7 @@ export default function ContactPage() {
               <div className="mt-6 border-t pt-4">
                 <h5 className="font-semibold text-gray-800">Support hours</h5>
                 <p className="text-sm text-gray-700">
-                  Mon — Fri, 9am — 6pm PST
+                  Mon - Fri, 9am - 6pm PST
                 </p>
               </div>
             </div>

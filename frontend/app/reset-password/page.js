@@ -11,7 +11,7 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [status, setStatus] = useState(null);
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
   useEffect(()=>{ setEmail(emailParam); }, [emailParam]);
 

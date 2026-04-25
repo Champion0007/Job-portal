@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "lint": "echo \"No lint configured\""
+    "lint": "node --check src/index.js && node --check src/routes/auth.js && node --check src/routes/password.js && node --check src/routes/contact.js && node --check src/routes/jobs.js && node --check src/routes/applications.js && node --check src/config/passport.js && node --check src/services/emailService.js"
   },
   "dependencies": {
     "axios": "^1.6.0",

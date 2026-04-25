@@ -5,7 +5,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import Jobcard from "../../components/Jobcard";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 function normalizeJobType(value) {
   return String(value || "").trim().toLowerCase();
@@ -33,7 +33,7 @@ export default function JobsPage() {
   );
 
   const categories = ['Engineering', 'Design', 'Product', 'Marketing', 'Sales', 'Customer Support'];
-  const profiles = ['Intern', 'Junior', 'Mid', 'Senior', 'Lead'];
+  const profiles = ['Fresher', 'Junior', 'Mid', 'Senior'];
 
   useEffect(() => {
     setQuery(searchParams.get("q") || "");
@@ -51,11 +51,12 @@ export default function JobsPage() {
         const q = new URLSearchParams();
         if (query) q.set('q', query);
         if (location) q.set('location', location);
-        const res = await fetch(`${API_BASE}/api/jobs?${q.toString()}`);
-        const data = await res.json();
+        const url = `${API_BASE}/api/jobs${q.toString() ? `?${q.toString()}` : ""}`;
+        const res = await fetch(url);
+        const data = await res.json().catch(() => []);
         console.log("Fetched jobs:", data);
         if (mounted) {
-          setJobs(data || []);
+          setJobs(Array.isArray(data) ? data : []);
           // Log if any jobs are missing titles
           if (data && Array.isArray(data)) {
             data.forEach((job, index) => {
@@ -78,26 +79,23 @@ export default function JobsPage() {
   // client-side filtering for category/profile/jobType when data is available
   const filteredJobs = jobs.filter((job) => {
     if (category) {
-      // if job.category is string or array of skills
-      if (Array.isArray(job.category) && !job.category.includes(category)) return false;
-      if (typeof job.category === 'string' && !job.category.toLowerCase().includes(category.toLowerCase())) return false;
-      if (!job.category && job.skills && Array.isArray(job.skills) && !job.skills.includes(category)) return false;
+      const skills = Array.isArray(job.skills) ? job.skills : [];
+      if (!skills.some((skill) => skill.toLowerCase().includes(category.toLowerCase()))) return false;
     }
     if (profile) {
-      // infer profile from experience or title
-      const title = (job.title || '').toLowerCase();
-      if (profile === 'Intern' && !title.includes('intern')) return false;
-      if (profile === 'Junior' && !(title.includes('junior') || title.includes('jr'))) return false;
-      if (profile === 'Senior' && !title.includes('senior') && !title.includes('lead')) return false;
-      // allow Mid/Lead as broad matches
+      if ((job.experienceLevel || '').toLowerCase() !== profile.toLowerCase()) return false;
     }
     // jobType filters
     const activeTypes = Object.keys(jobTypeFilter).filter((k) => jobTypeFilter[k]);
     if (activeTypes.length > 0) {
       const jt = (job.jobType || job.type || '').toLowerCase();
+      const locationText =
+        typeof job.location === "string"
+          ? job.location
+          : [job.location?.city, job.location?.state, job.location?.country].filter(Boolean).join(" ");
+      const remoteMatch = jt === 'remote' || locationText.toLowerCase().includes('remote');
+      if (jobTypeFilter.remote && remoteMatch) return true;
       if (!activeTypes.includes(jt)) return false;
-      // for remote filter, allow 'remote' string in location
-      if (jobTypeFilter.remote && !(jt === 'remote' || (job.location && String(job.location).toLowerCase().includes('remote')))) return false;
     }
     return true;
   });
@@ -109,9 +107,10 @@ export default function JobsPage() {
       const q = new URLSearchParams();
       if (query) q.set('q', query);
       if (location) q.set('location', location);
-      const res = await fetch(`${API_BASE}/api/jobs?${q.toString()}`);
-      const data = await res.json();
-      setJobs(data || []);
+      const url = `${API_BASE}/api/jobs${q.toString() ? `?${q.toString()}` : ""}`;
+      const res = await fetch(url);
+      const data = await res.json().catch(() => []);
+      setJobs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     } finally {

@@ -44,8 +44,27 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 app.use(helmet());
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/+$/, '');
+    if (allowedOrigins.includes(cleanOrigin)) return callback(null, true);
+    return callback(null, true);
+  },
+}));
 app.use(express.json());
+
+app.use((req, res, next) => {
+  if (req.url.startsWith('//api/')) {
+    req.url = req.url.replace(/^\/+api\//, '/api/');
+  }
+  next();
+});
 
 // Serve uploaded files from the backend/uploads folder regardless of where the
 // server is started from. This avoids 404s when the process cwd changes.
@@ -55,7 +74,6 @@ app.use(
 );
 
 app.use(passport.initialize());
-app.use("/api/auth", require("./routes/auth"));
 app.use('/api/auth', authRoutes);
 // Password reset routes (forgot / reset)
 app.use('/api/auth/password', passwordRoutes);

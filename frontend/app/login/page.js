@@ -8,7 +8,7 @@ import Footer from "../../components/Footer";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -21,12 +21,12 @@ export default function LoginPage() {
   const auth = useAuth();
   const { withLoading } = useLoading();
 
-  // ✅ BLOCKED USER MESSAGE
+
   useEffect(() => {
     const blocked = searchParams.get("error");
     if (blocked === "blocked") {
       setError(
-        "🚫 Your account has been blocked by the admin. Please contact support.",
+        "Your account has been blocked by the admin. Please contact support.",
       );
     }
   }, [searchParams]);
@@ -136,7 +136,7 @@ export default function LoginPage() {
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <a
-                  href="http://localhost:5000/api/auth/google"
+                  href={`${API_BASE}/api/auth/google`}
                   className="flex items-center justify-center gap-2 border text-black rounded-lg py-2 hover:bg-gray-50 hover:scale-[1.02] transition"
                 >
                   <FcGoogle size={20} />
@@ -144,7 +144,7 @@ export default function LoginPage() {
                 </a>
 
                 <a
-                  href="http://localhost:5000/api/auth/github"
+                  href={`${API_BASE}/api/auth/github`}
                   className="flex items-center justify-center gap-2 bg-gray-900 text-white rounded-lg py-2 hover:bg-black hover:scale-[1.02] transition"
                 >
                   <FaGithub size={18} />
@@ -154,7 +154,7 @@ export default function LoginPage() {
             </div>
 
             <p className="mt-6 text-sm text-gray-600">
-              Don’t have an account?{" "}
+              Don&apos;t have an account?{" "}
               <a href="/register" className="text-indigo-600 font-medium">
                 Create one
               </a>

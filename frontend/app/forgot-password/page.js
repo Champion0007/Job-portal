@@ -4,7 +4,7 @@ import { useState } from "react";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState(null);
-  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 
   const submit = async (e) => {
     e.preventDefault();
@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
         message:
           data.message || "Reset link sent to your registered email address.",
       });
-    } catch (err) {
+    } catch {
       setStatus({ ok: false, message: "Failed to send. Try again later." });
     }
   };
