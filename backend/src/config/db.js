@@ -4,6 +4,7 @@ const connectDB = async () => {
   try {
     // Use environment variable if provided; otherwise default to local MongoDB for development.
     let uri = process.env.MONGODB_URI;
+    // console.log("MONGODB_URI:", process.env.MONGODB_URI);
     if (!uri) {
       uri = 'mongodb://127.0.0.1:27017/jobportal';
       console.warn('MONGODB_URI not set — defaulting to local MongoDB at', uri);
