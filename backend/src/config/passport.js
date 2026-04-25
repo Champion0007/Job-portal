@@ -59,21 +59,24 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
       {
         clientID: process.env.GITHUB_CLIENT_ID?.trim(),
         clientSecret: process.env.GITHUB_CLIENT_SECRET?.trim(),
-        callbackURL: "/api/auth/github/callback",
+        callbackURL:
+          process.env.NODE_ENV === "production"
+            ? "https://job-portal-backend-3m4k.onrender.com/api/auth/github/callback"
+            : "http://localhost:5000/api/auth/github/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          console.log("GITHUB PROFILE:", profile);
+
           const email =
             profile.emails && profile.emails.length > 0
               ? profile.emails[0].value
               : null;
-              console.log("GITHUB PROFILE:", profile);
+
           const lookup = [{ githubId: profile.id }];
           if (email) lookup.push({ email: email.toLowerCase() });
 
-          let user = await User.findOne({
-            $or: lookup,
-          });
+          let user = await User.findOne({ $or: lookup });
 
           if (!user) {
             const userData = {
@@ -83,6 +86,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
               role: "seeker",
             };
             if (email) userData.email = email.toLowerCase();
+
             user = await User.create(userData);
           } else if (!user.githubId) {
             user.githubId = profile.id;
@@ -91,6 +95,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
 
           return done(null, user);
         } catch (err) {
+          console.error("GitHub Error:", err);
           return done(err, null);
         }
       },
