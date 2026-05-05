@@ -1,8 +1,48 @@
 const express = require("express");
 const Job = require("../models/Job");
 const auth = require("../middleware/auth");
+const { normalizeStringArray } = require("../services/resumeParser");
 
 const router = express.Router();
+
+const mapJobPayload = (body) => {
+  const updates = {};
+  const allowedSimpleFields = [
+    "title",
+    "description",
+    "jobType",
+    "experienceLevel",
+  ];
+
+  allowedSimpleFields.forEach((field) => {
+    if (body[field] !== undefined) updates[field] = body[field];
+  });
+
+  if (
+    body.city !== undefined ||
+    body.state !== undefined ||
+    body.country !== undefined
+  ) {
+    updates.location = {
+      city: body.city || "",
+      state: body.state || "",
+      country: body.country || "India",
+    };
+  }
+
+  if (body.minSalary !== undefined || body.maxSalary !== undefined) {
+    updates.salary = {
+      min: body.minSalary ? Number(body.minSalary) : undefined,
+      max: body.maxSalary ? Number(body.maxSalary) : undefined,
+    };
+  }
+
+  if (body.skills !== undefined) {
+    updates.skills = normalizeStringArray(body.skills);
+  }
+
+  return updates;
+};
 
 /**
  * ✅ Create a job (Employer only)
@@ -51,7 +91,7 @@ router.post("/", auth, async (req, res) => {
       jobType,
 
       // ✅ OPTIONAL SKILLS
-      skills: Array.isArray(skills) ? skills : [],
+      skills: normalizeStringArray(skills),
 
       employer: req.user._id,
       company: req.user.company,
@@ -98,6 +138,54 @@ router.get("/employer", auth, async (req, res) => {
  * ✅ List all jobs with filters
  * GET /api/jobs
  */
+router.put("/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "employer") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    if (String(job.employer) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    Object.assign(job, mapJobPayload(req.body));
+    await job.save();
+
+    res.json({
+      message: "Job updated successfully",
+      job,
+    });
+  } catch (err) {
+    console.error("Update Job Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "employer") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const job = await Job.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    if (String(job.employer) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    await job.deleteOne();
+
+    res.json({ message: "Job deleted successfully" });
+  } catch (err) {
+    console.error("Delete Job Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
     const { q, location, jobType, page = 1, perPage = 10 } = req.query;

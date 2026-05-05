@@ -23,12 +23,14 @@ function statusBadge(status) {
     interview: "bg-yellow-100 text-yellow-700",
     hired: "bg-green-100 text-green-700",
     rejected: "bg-red-100 text-red-700",
+    withdrawn: "bg-gray-200 text-gray-700",
   };
   return map[status] || "bg-gray-100 text-gray-700";
 }
 
 // ✅ PROGRESS CALCULATION
 function progressPercent(status) {
+  if (status === "withdrawn") return 100;
   const steps = ["applied", "reviewed", "shortlisted", "interview", "hired"];
   const index = steps.indexOf(status);
   return index === -1 ? 10 : ((index + 1) / steps.length) * 100;
@@ -58,6 +60,33 @@ export default function DashboardSeeker() {
 
     if (token) fetchMyApplications();
   }, [token]);
+
+  const withdrawApplication = async (appId) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/applications/${appId}/withdraw`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Failed to withdraw application");
+        return;
+      }
+
+      setApplications((prev) =>
+        prev.map((app) =>
+          app._id === appId
+            ? { ...app, status: "withdrawn", updatedAt: data.application?.updatedAt }
+            : app
+        )
+      );
+    } catch (err) {
+      console.error("Withdraw Application Error:", err);
+      alert("Server error while withdrawing application");
+    }
+  };
 
   if (loading) return <div className="p-6">Loading your applications...</div>;
 
@@ -141,6 +170,15 @@ export default function DashboardSeeker() {
                   </>
                 )}
 
+                {app.status === "withdrawn" && (
+                  <>
+                    <XCircle className="text-gray-600" size={18} />
+                    <span className="text-gray-700">
+                      You withdrew this application.
+                    </span>
+                  </>
+                )}
+
                 {["applied", "reviewed", "shortlisted", "interview"].includes(
                   app.status
                 ) && (
@@ -195,6 +233,16 @@ export default function DashboardSeeker() {
                 >
                   View Job Details →
                 </Link>
+                {app.status !== "withdrawn" &&
+                  app.status !== "hired" &&
+                  app.status !== "rejected" && (
+                    <button
+                      onClick={() => withdrawApplication(app._id)}
+                      className="ml-4 text-sm text-red-600 hover:underline"
+                    >
+                      Withdraw
+                    </button>
+                  )}
               </div>
             </div>
           ))}

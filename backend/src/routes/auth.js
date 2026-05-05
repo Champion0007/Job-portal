@@ -10,7 +10,9 @@ const sendEmail = require("../utils/sendEmail");
 const router = express.Router();
 
 function normalizeEmail(email) {
-  return String(email || "").trim().toLowerCase();
+  return String(email || "")
+    .trim()
+    .toLowerCase();
 }
 
 function publicUser(user) {
@@ -30,11 +32,9 @@ function publicUser(user) {
 }
 
 function signToken(user) {
-  return jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 }
 
 function oauthSuccessRedirect(token) {
@@ -61,9 +61,7 @@ router.post("/register", async (req, res) => {
     if (existing)
       return res.status(400).json({ message: "Email already registered" });
 
-    const safeRole = ["seeker", "employer"].includes(role)
-      ? role
-      : "seeker";
+    const safeRole = ["seeker", "employer"].includes(role) ? role : "seeker";
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -136,11 +134,12 @@ router.post("/login", async (req, res) => {
       return res.status(403).json({ message: "Account blocked" });
 
     if (!user.passwordHash)
-      return res.status(400).json({ message: "Please login with your social account" });
+      return res
+        .status(400)
+        .json({ message: "Please login with your social account" });
 
     const match = await bcrypt.compare(password, user.passwordHash);
-    if (!match)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
     const token = signToken(user);
 
@@ -156,7 +155,7 @@ router.post("/login", async (req, res) => {
 
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
 router.get(
@@ -165,24 +164,21 @@ router.get(
   (req, res) => {
     // ✅ BLOCK CHECK
     if (req.user.isBlocked) {
-      return res.redirect(
-        `${frontendUrl()}/login?error=blocked`
-      );
+      return res.redirect(`${frontendUrl()}/login?error=blocked`);
     }
 
     const token = signToken(req.user);
 
     res.redirect(oauthSuccessRedirect(token));
-  }
+  },
 );
-
 
 /* ======================
    GITHUB AUTH
 ====================== */
 router.get(
   "/github",
-  passport.authenticate("github", { scope: ["user:email"] })
+  passport.authenticate("github", { scope: ["user:email"] }),
 );
 
 router.get(
@@ -191,15 +187,13 @@ router.get(
   (req, res) => {
     // ✅ BLOCK CHECK
     if (req.user.isBlocked) {
-      return res.redirect(
-        `${frontendUrl()}/login?error=blocked`
-      );
+      return res.redirect(`${frontendUrl()}/login?error=blocked`);
     }
 
     const token = signToken(req.user);
 
     res.redirect(oauthSuccessRedirect(token));
-  }
+  },
 );
 
 /* ======================
@@ -213,7 +207,10 @@ router.post("/forgot-password", async (req, res) => {
     if (!user) return res.json({ message: "If email exists, link sent." });
 
     const token = crypto.randomBytes(32).toString("hex");
-    user.resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
+    user.resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
     user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
@@ -234,7 +231,10 @@ router.post("/forgot-password", async (req, res) => {
 router.post("/reset-password", async (req, res) => {
   const { token, password } = req.body;
   const email = normalizeEmail(req.body.email);
-  const hashedToken = crypto.createHash("sha256").update(token || "").digest("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token || "")
+    .digest("hex");
 
   const user = await User.findOne({
     email,

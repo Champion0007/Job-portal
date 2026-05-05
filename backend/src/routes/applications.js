@@ -2,19 +2,34 @@ const express = require("express");
 const Application = require("../models/Application");
 const Job = require("../models/Job");
 const auth = require("../middleware/auth");
-const upload = require("../middleware/upload"); // ✅ multer
+const upload = require("../middleware/upload");
+const {
+  calculateResumeScore,
+  parseResume,
+} = require("../services/resumeParser");
 
 const router = express.Router();
 
+const validStatuses = [
+  "applied",
+  "reviewed",
+  "shortlisted",
+  "interview",
+  "rejected",
+  "hired",
+  "withdrawn",
+];
+
 /**
- * ✅ Candidate applies to a job WITH full details + resume
+ * Candidate applies to a job WITH full details + resume
  * POST /api/applications
  * Body: form-data (multipart)
  */
 router.post(
   "/",
   auth,
-  upload.single("resume"), // ✅ resume field name
+  upload.single("resume"),
+  upload.handleUploadError,
   async (req, res) => {
     try {
       if (req.user.role !== "seeker" && req.user.role !== "candidate") {
@@ -41,7 +56,10 @@ router.post(
       const job = await Job.findOne({ _id: jobId, status: "approved" });
       if (!job) return res.status(404).json({ message: "Job not found" });
 
-      // check already applied
+      if (!req.file) {
+        return res.status(400).json({ message: "Resume PDF is required" });
+      }
+
       const existing = await Application.findOne({
         job: jobId,
         candidate: req.user._id,
@@ -53,8 +71,35 @@ router.post(
           .json({ message: "You have already applied to this job" });
       }
 
-      // ✅ resumeUrl from uploaded file
-      const resumeUrl = req.file ? `/uploads/${req.file.filename}` : "";
+      const resumeUrl = `/uploads/${req.file.filename}`;
+      const formSkills = skills
+        ? skills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+
+      let resumeAnalysis = {
+        skills: [],
+        experience: "",
+        education: "",
+        summary: "",
+      };
+      let scoreResult = {
+        aiScore: undefined,
+        matchedSkills: [],
+        missingSkills: [],
+      };
+
+      try {
+        resumeAnalysis = await parseResume(req.file.path, req.file.mimetype);
+        if (resumeAnalysis.skills.length === 0 && formSkills.length > 0) {
+          resumeAnalysis.skills = formSkills;
+        }
+        scoreResult = calculateResumeScore(resumeAnalysis, job);
+      } catch (aiErr) {
+        console.error("Resume AI analysis failed:", aiErr);
+      }
 
       const application = await Application.create({
         job: jobId,
@@ -66,19 +111,26 @@ router.post(
         experienceYears: experienceYears ? Number(experienceYears) : 0,
         currentCompany,
         currentRole,
-        skills: skills
-          ? skills
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : [],
+        skills: formSkills,
         coverLetter: coverLetter || "",
         resumeUrl,
+        aiScore: scoreResult.aiScore,
+        matchedSkills: scoreResult.matchedSkills,
+        missingSkills: scoreResult.missingSkills,
+        resumeSummary: resumeAnalysis.summary || "",
+        analysisStatus: "completed",
       });
 
       res.status(201).json({
         message: "Application submitted successfully",
         application,
+        analysis: {
+          skills: resumeAnalysis.skills,
+          aiScore: scoreResult.aiScore,
+          matchedSkills: scoreResult.matchedSkills,
+          missingSkills: scoreResult.missingSkills,
+          summary: resumeAnalysis.summary || "",
+        },
       });
     } catch (err) {
       console.error("Apply Job Error:", err);
@@ -88,7 +140,7 @@ router.post(
 );
 
 /**
- * ✅ Employer: view all applications for a job (with full details)
+ * Employer: view all applications for a job (with full details)
  * GET /api/applications/job/:jobId
  */
 router.get("/job/:jobId", auth, async (req, res) => {
@@ -115,7 +167,7 @@ router.get("/job/:jobId", auth, async (req, res) => {
 });
 
 /**
- * ✅ Candidate: view own applications
+ * Candidate: view own applications
  * GET /api/applications/mine
  */
 router.get("/mine", auth, async (req, res) => {
@@ -132,22 +184,42 @@ router.get("/mine", auth, async (req, res) => {
 });
 
 /**
- * ✅ Employer: Update application status
+ * Candidate: Withdraw own application
+ * PUT /api/applications/:id/withdraw
+ */
+router.put("/:id/withdraw", auth, async (req, res) => {
+  try {
+    const appDoc = await Application.findById(req.params.id);
+
+    if (!appDoc) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    if (String(appDoc.candidate) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    appDoc.status = "withdrawn";
+    await appDoc.save();
+
+    res.json({
+      message: "Application withdrawn",
+      application: appDoc,
+    });
+  } catch (err) {
+    console.error("Withdraw Application Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * Employer: Update application status
  * PATCH /api/applications/:id/status
  * Body: { status }
  */
 router.patch("/:id/status", auth, async (req, res) => {
   try {
     const { status } = req.body;
-
-    const validStatuses = [
-      "applied",
-      "reviewed",
-      "shortlisted",
-      "interview",
-      "rejected",
-      "hired",
-    ];
 
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
@@ -159,7 +231,6 @@ router.patch("/:id/status", auth, async (req, res) => {
       return res.status(404).json({ message: "Application not found" });
     }
 
-    // ✅ Only employer of this job OR admin can change status
     if (
       String(appDoc.job.employer) !== String(req.user._id) &&
       req.user.role !== "admin"
@@ -181,7 +252,7 @@ router.patch("/:id/status", auth, async (req, res) => {
 });
 
 /**
- * 🆕 Employer: Schedule interview for an application
+ * Employer: Schedule interview for an application
  * PATCH /api/applications/:id/interview
  * Body: { date, mode, location, link, notes }
  */
@@ -194,7 +265,6 @@ router.patch("/:id/interview", auth, async (req, res) => {
       return res.status(404).json({ message: "Application not found" });
     }
 
-    // ✅ Only employer of this job or admin can schedule
     if (
       String(appDoc.job.employer) !== String(req.user._id) &&
       req.user.role !== "admin"
@@ -202,7 +272,6 @@ router.patch("/:id/interview", auth, async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    // ✅ Save interview details + set status = interview
     appDoc.interview = {
       date: date ? new Date(date) : null,
       mode,
@@ -223,6 +292,5 @@ router.patch("/:id/interview", auth, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 module.exports = router;

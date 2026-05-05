@@ -39,6 +39,7 @@ export default function JobDetailsPage() {
   const [applyLoading, setApplyLoading] = useState(false);
   const [applyError, setApplyError] = useState("");
   const [applySuccess, setApplySuccess] = useState("");
+  const [analysisPreview, setAnalysisPreview] = useState(null);
 
   /* Fetch Job */
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function JobDetailsPage() {
     e.preventDefault();
     setApplyError("");
     setApplySuccess("");
+    setAnalysisPreview(null);
 
     if (!user) {
       setApplyError("Please login to apply.");
@@ -81,6 +83,16 @@ export default function JobDetailsPage() {
 
     if (!resume) {
       setApplyError("Please upload your resume (PDF).");
+      return;
+    }
+
+    if (resume.type !== "application/pdf" || !resume.name.toLowerCase().endsWith(".pdf")) {
+      setApplyError("Resume must be a PDF file.");
+      return;
+    }
+
+    if (resume.size > 5 * 1024 * 1024) {
+      setApplyError("Resume must be 5MB or smaller.");
       return;
     }
 
@@ -115,6 +127,7 @@ export default function JobDetailsPage() {
       }
 
       setApplySuccess("Application submitted successfully!");
+      setAnalysisPreview(data.analysis || null);
 
 
       setFullName("");
@@ -195,6 +208,22 @@ export default function JobDetailsPage() {
               {job.description}
             </p>
           </section>
+
+          {job.skills?.length > 0 && (
+            <section className="mt-8">
+              <h2 className="text-2xl font-semibold mb-3">Required Skills</h2>
+              <div className="flex flex-wrap gap-2">
+                {job.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-sm"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
 
@@ -212,6 +241,21 @@ export default function JobDetailsPage() {
           {applySuccess && (
             <div className="mb-4 bg-green-100 text-green-700 p-3 rounded">
               {applySuccess}
+            </div>
+          )}
+
+          {analysisPreview && (
+            <div className="mb-4 bg-indigo-50 text-indigo-800 p-3 rounded text-sm space-y-2">
+              {typeof analysisPreview.aiScore === "number" && (
+                <div className="font-semibold">
+                  AI match score: {analysisPreview.aiScore}/100
+                </div>
+              )}
+              {analysisPreview.skills?.length > 0 && (
+                <div>
+                  <b>Detected skills:</b> {analysisPreview.skills.join(", ")}
+                </div>
+              )}
             </div>
           )}
 
@@ -290,7 +334,25 @@ export default function JobDetailsPage() {
                 type="file"
                 accept=".pdf"
                 className="input"
-                onChange={(e) => setResume(e.target.files[0])}
+                onChange={(e) => {
+                  setApplyError("");
+                  const file = e.target.files[0];
+                  if (!file) {
+                    setResume(null);
+                    return;
+                  }
+                  if (file.type !== "application/pdf" || !file.name.toLowerCase().endsWith(".pdf")) {
+                    setResume(null);
+                    setApplyError("Resume must be a PDF file.");
+                    return;
+                  }
+                  if (file.size > 5 * 1024 * 1024) {
+                    setResume(null);
+                    setApplyError("Resume must be 5MB or smaller.");
+                    return;
+                  }
+                  setResume(file);
+                }}
                 required
               />
 
@@ -299,7 +361,7 @@ export default function JobDetailsPage() {
                 disabled={applyLoading}
                 className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700"
               >
-                {applyLoading ? "Applying..." : "Submit Application"}
+                {applyLoading ? "Analyzing resume..." : "Submit Application"}
               </button>
             </form>
           )}

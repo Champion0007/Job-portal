@@ -1,5 +1,4 @@
 require('dotenv').config();
-const path = require("path");
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -44,17 +43,17 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 app.use(helmet());
-const allowedOrigins = (process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000')
-  .split(',')
-  .map((origin) => origin.trim().replace(/\/+$/, ''))
-  .filter(Boolean);
+const strictAllowedOrigins = [
+  'http://localhost:3000',
+  'https://job-portal-snowy-pi.vercel.app',
+];
 
 app.use(cors({
   origin(origin, callback) {
     if (!origin) return callback(null, true);
     const cleanOrigin = origin.replace(/\/+$/, '');
-    if (allowedOrigins.includes(cleanOrigin)) return callback(null, true);
-    return callback(null, true);
+    if (strictAllowedOrigins.includes(cleanOrigin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
   },
 }));
 app.use(express.json());
@@ -66,19 +65,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve uploaded files from the backend/uploads folder regardless of where the
-// server is started from. This avoids 404s when the process cwd changes.
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "..", "uploads"))
-);
-
 app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 // Password reset routes (forgot / reset)
 app.use('/api/auth/password', passwordRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/applications', applicationsRoutes);
+app.use('/api/resume', require('./routes/resume'));
 app.use('/api/ai', aiRoutes);
 app.use('/api/contact', contactRoutes);
 app.use("/api/subscribe", subscribeRoutes);
@@ -98,6 +91,10 @@ app.use("/api/admin/subscribers", adminSubscribersRoutes);
 app.get('/', (req, res) => res.json({ ok: true, message: 'Job Portal API' }));
 
 app.use((err, req, res, next) => {
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ message: 'Not allowed by CORS' });
+  }
+
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });

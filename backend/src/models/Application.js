@@ -66,6 +66,30 @@ const ApplicationSchema = new mongoose.Schema(
       type: String,
     },
 
+    aiScore: {
+      type: Number,
+    },
+
+    matchedSkills: {
+      type: [String],
+      default: [],
+    },
+
+    missingSkills: {
+      type: [String],
+      default: [],
+    },
+
+    resumeSummary: {
+      type: String,
+    },
+
+    analysisStatus: {
+      type: String,
+      enum: ["pending", "completed"],
+      default: "pending",
+    },
+
     // 🆕 INTERVIEW DETAILS
     interview: {
       date: Date,
@@ -91,6 +115,7 @@ const ApplicationSchema = new mongoose.Schema(
         "interview",
         "rejected",
         "hired",
+        "withdrawn",
       ],
       default: "applied",
     },

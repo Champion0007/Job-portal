@@ -70,6 +70,7 @@ export default function Jobcard({ job }) {
           </Link>
 
           <p className="text-sm text-gray-500">{companyName || "Company"}</p>
+             {console.log(companyName)}
         </div>
       </div>
 

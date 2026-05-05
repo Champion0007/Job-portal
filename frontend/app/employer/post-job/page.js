@@ -6,7 +6,9 @@ import { useAuth } from "../../../components/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+).replace(/\/+$/, "");
 
 export default function PostJobPage() {
   const { token, user } = useAuth();
@@ -22,6 +24,7 @@ export default function PostJobPage() {
     maxSalary: "",
     jobType: "Full-Time",
     experienceLevel: "Fresher",
+    skills: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -70,11 +73,11 @@ export default function PostJobPage() {
       }
 
       setSuccess(
-        "Job posted successfully. It will appear on the Jobs page after admin approval."
+        "Job posted successfully. It will appear on the Jobs page after admin approval.",
       );
       setTimeout(() => {
         router.push("/dashboard");
-      }, 1200);
+      }, 2000);
     } catch (err) {
       console.error(err);
       setError(err.message || "Something went wrong");
@@ -144,6 +147,20 @@ export default function PostJobPage() {
                 required
                 placeholder="Write detailed job role, responsibilities, and requirements..."
                 className="w-full rounded-lg border px-4 py-2 h-32 focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1">
+                Required Skills
+              </label>
+              <input
+                type="text"
+                name="skills"
+                value={form.skills}
+                onChange={handleChange}
+                placeholder="React, Node.js, MongoDB"
+                className="w-full rounded-lg border px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
 

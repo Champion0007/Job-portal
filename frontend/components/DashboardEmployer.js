@@ -21,6 +21,7 @@ export default function DashboardEmployer() {
   const [loading, setLoading] = useState(true);
   const [selectedApplicants, setSelectedApplicants] = useState(null);
   const [activeJobId, setActiveJobId] = useState(null);
+  const [sortByScore, setSortByScore] = useState(false);
 
   // 🆕 INTERVIEW FORM STATE
   const [interviewForm, setInterviewForm] = useState({
@@ -68,6 +69,28 @@ export default function DashboardEmployer() {
     } catch (err) {
       console.error("Applicants Fetch Error:", err);
       setSelectedApplicants([]);
+    }
+  };
+
+  const downloadResume = async (appId) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/resume/${appId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to open resume");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+    } catch (err) {
+      console.error("Resume Download Error:", err);
+      alert("Server error while opening resume");
     }
   };
 
@@ -182,6 +205,13 @@ export default function DashboardEmployer() {
     return <div className="p-6">Please login to view your dashboard.</div>;
   }
 
+  const applicantsToRender = selectedApplicants
+    ? [...selectedApplicants].sort((a, b) => {
+        if (!sortByScore) return 0;
+        return (b.aiScore ?? -1) - (a.aiScore ?? -1);
+      })
+    : [];
+
   return (
     <div className="space-y-8">
 
@@ -259,11 +289,20 @@ export default function DashboardEmployer() {
             <Users size={20} /> Applicants
           </h3>
 
+          {selectedApplicants?.length > 0 && (
+            <button
+              onClick={() => setSortByScore((prev) => !prev)}
+              className="mb-4 px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 transition"
+            >
+              {sortByScore ? "Sorted by AI score" : "Sort by AI score"}
+            </button>
+          )}
+
           {selectedApplicants?.length === 0 ? (
             <div className="text-gray-500">No applicants yet.</div>
           ) : (
             <div className="grid md:grid-cols-2 gap-5">
-              {selectedApplicants?.map((app) => (
+              {applicantsToRender.map((app) => (
                 <div
                   key={app._id}
                   className="border rounded-xl p-5 bg-gray-50 hover:shadow-md transition"
@@ -297,6 +336,22 @@ export default function DashboardEmployer() {
                       <b>Skills:</b> {app.skills.join(", ")}
                     </div>
                   )}
+
+                  <div className="mt-3 text-sm bg-white border rounded p-3 space-y-2">
+                    <div className="font-semibold text-gray-800">
+                      AI Score: {typeof app.aiScore === "number" ? `${app.aiScore}/100` : "Not available"}
+                    </div>
+                    {app.matchedSkills?.length > 0 && (
+                      <div>
+                        <b>Matched:</b> {app.matchedSkills.join(", ")}
+                      </div>
+                    )}
+                    {app.missingSkills?.length > 0 && (
+                      <div>
+                        <b>Missing:</b> {app.missingSkills.join(", ")}
+                      </div>
+                    )}
+                  </div>
 
                   {app.coverLetter && (
                     <div className="mt-2 text-sm">
@@ -341,15 +396,13 @@ export default function DashboardEmployer() {
                   )}
 
                   {app.resumeUrl && (
-                    <a
-                      href={`${API_BASE}${app.resumeUrl}`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      onClick={() => downloadResume(app._id)}
                       className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-green-600 text-white text-sm rounded-xl hover:bg-green-700 transition"
                     >
                       <Download size={16} />
                       Download Resume
-                    </a>
+                    </button>
                   )}
 
                   {/* STATUS BUTTONS */}
